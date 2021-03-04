@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-monitor
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      #共享进程信息
+      shareProcessNamespace: true
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+      - name: monitor
+        image: monitor:v0.1
+        #添加权限才能查看其他进程信息
+        securityContext:
+          capabilities:
+            add:
+            - SYS_PTRACE
+        resources:
+          limits:
+            memory: "200Mi"
+          requests:
+            memory: "100Mi"
+        env:
+        - name: MONITOR_PROCESS_NAME
+          value: "nginx"
